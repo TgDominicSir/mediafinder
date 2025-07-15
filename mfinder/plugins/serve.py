@@ -212,7 +212,7 @@ async def get_files(bot, query):
                 return
         except UserNotParticipant:
             link = await get_link()
-            await query.answer("Please join my Update Channel first!", show_alert=True)
+            #await query.answer("Please join my Update Channel first!", show_alert=True)
             await query.message.reply_text(
                 text="**Please join my Update Channel to download files!**",
                 reply_markup=InlineKeyboardMarkup(
