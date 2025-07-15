@@ -82,7 +82,7 @@ async def find_search_settings(user_id):
             precise_mode = "Disabled"
             kb.append(on_kb)
     else:
-        await change_search_settings(user_id, precise_mode=False, button_mode=True)
+        await change_search_settings(user_id)
         precise_mode = "Disabled"
         kb.append(on_kb)
 
@@ -90,28 +90,26 @@ async def find_search_settings(user_id):
         InlineKeyboardButton("[Result Mode]:", callback_data="res mode"),
     ]
 
-    btn_kb = InlineKeyboardButton("🔳 Button", callback_data="res btnn")
-    link_kb = InlineKeyboardButton("🔗 HyperLink", callback_data="res link")
-    list_kb = InlineKeyboardButton("📃 List", callback_data="res list")
+    btn_kb = InlineKeyboardButton("📃 List", callback_data="res btnn")
+    link_kb = InlineKeyboardButton("🔳 Button", callback_data="res link")
+    list_kb = InlineKeyboardButton("🔗 HyperLink", callback_data="res list")
 
     if search_settings:
         button_mode = search_settings.button_mode
         link_mode = search_settings.link_mode
         list_mode = search_settings.list_mode
         if button_mode:
-            bkb.append(link_kb)  # Show next option (HyperLink)
-        elif link_mode:
-            bkb.append(list_kb)  # Show next option (List)
-        elif list_mode:
-            bkb.append(btn_kb)   # Show next option (Button)
-        else:
-            # Default to Button mode if somehow none are set
-            await change_search_settings(user_id, button_mode=True)
             bkb.append(link_kb)
+        elif link_mode:
+            bkb.append(list_kb)
+        elif list_mode:
+            bkb.append(btn_kb)
+        else:
+            await change_search_settings(user_id, link_mode=True)
+            bkb.append(list_kb)
     else:
-        # Default to Button mode for new users
-        await change_search_settings(user_id, button_mode=True)
-        bkb.append(link_kb)  # Show next option (HyperLink)
+        await change_search_settings(user_id, link_mode=True)
+        bkb.append(btn_kb)
 
     set_kb = InlineKeyboardMarkup([kb, bkb])
 
