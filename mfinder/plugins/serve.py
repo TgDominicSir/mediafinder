@@ -181,43 +181,21 @@ async def get_result(search, page_no, user_id, username):
         index = (page_no - 1) * 10
         crnt_pg = index // 10 + 1
         tot_pg = (count + 10 - 1) // 10
-        btn_count = 0
-        result = f"**Search Query:** `{search}`\n**Total Results:** `{count}`\n**Page:** `{crnt_pg}/{tot_pg}`\n**Precise Search: **`{precise_search}`\n**Result Mode:** `{search_md}`\n"
+        result = f"**Search Query:** `{search}`\n**Total Results:** `{count}`\n**Page:** `{crnt_pg}/{tot_pg}`\n**Precise Search: **`{precise_search}`\n**Result Mode:** `{search_md}`\n\n"
         page = page_no
+        
         for file in files:
             if button_mode == "ON":
                 file_id = file.file_id
-                filename = f"[{get_size(file.file_size)}]{file.file_name}"
-                btn_kb = InlineKeyboardButton(
-                    text=f"{filename}", callback_data=f"file {file_id}"
-                )
-                btn.append([btn_kb])
+                filename = f"[{get_size(file.file_size)}] {file.file_name}"
+                btn.append([InlineKeyboardButton(text=filename, callback_data=f"file {file_id}")])
             elif link_mode == "ON":
                 index += 1
-                btn_count += 1
                 file_id = file.file_id
                 filename = f"**{index}.** [{file.file_name}](https://t.me/{username}/?start={file_id}) - `[{get_size(file.file_size)}]`"
                 result += "\n" + filename
-            else:
-                index += 1
-                btn_count += 1
-                file_id = file.file_id
-                filename = (
-                    f"**{index}.** `{file.file_name}` - `[{get_size(file.file_size)}]`"
-                )
-                result += "\n" + filename
 
-                btn_kb = InlineKeyboardButton(
-                    text=f"{index}", callback_data=f"file {file_id}"
-                )
-
-                if btn_count == 1 or btn_count == 6:
-                    btn.append([btn_kb])
-                elif 6 > btn_count > 1:
-                    btn[0].append(btn_kb)
-                else:
-                    btn[1].append(btn_kb)
-
+        # Pagination buttons
         nxt_kb = InlineKeyboardButton(
             text="Next >>",
             callback_data=f"nxt_pg {user_id} {page + 1} {search}",
@@ -237,15 +215,6 @@ async def get_result(search, page_no, user_id, username):
 
         if kb:
             btn.append(kb)
-
-        if button_mode and link_mode == "OFF":
-            result = (
-                result
-                + "\n\n"
-                + "🔻 __Tap on below corresponding file number to download.__ 🔻"
-            )
-        elif link_mode == "ON":
-            result = result + "\n\n" + " __Tap on file name & then start to download.__"
 
         return result, btn
 
