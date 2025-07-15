@@ -210,16 +210,21 @@ async def force_sub(bot, update):
 
         if channel:
             try:
-                link = await bot.create_chat_invite_link(channel)
+                # Create request-to-join invite link
+                link = await bot.create_chat_invite_link(
+                    chat_id=channel,
+                    creates_join_request=True,  # This creates a request-to-join link
+                    name="Force Subscribe Request Link"  # Optional: give it a name
+                )
                 await set_channel_link(link.invite_link)
             except Exception as e:
                 await update.reply_text(
-                    f" Error while creating channel invite link: {str(e)}"
+                    f"Error while creating channel invite link: {str(e)}"
                 )
                 return
 
             await set_force_sub(int(channel))
-            await update.reply_text(f"Force Subscription channel set to `{channel}`")
+            await update.reply_text(f"Force Subscription channel set to `{channel}` with request-to-join link")
         else:
             await set_channel_link(None)
             await update.reply_text("Force Subscription disabled")
@@ -229,6 +234,47 @@ async def force_sub(bot, update):
             "Please send in proper format `/forcesub channel_id/off`"
         )
 
+
+@Client.on_message(filters.command(["rmfsub"]) & filters.user(ADMINS))
+async def remove_force_sub(bot, update):
+    data = update.text.split()
+    
+    if len(data) == 2:
+        channel_id = data[-1]
+        
+        try:
+            # Convert to integer if it's a valid channel ID
+            channel_id = int(channel_id)
+            
+            # Remove the specific channel from force subscription
+            current_channel = await get_channel()  # Get current force sub channel
+            
+            if current_channel == channel_id:
+                await set_force_sub(0)  # Disable force subscription
+                await set_channel_link(None)  # Remove the invite link
+                await update.reply_text(f"Force Subscription for channel `{channel_id}` has been removed")
+            else:
+                await update.reply_text(f"Channel `{channel_id}` is not currently set as force subscription channel")
+                
+        except ValueError:
+            await update.reply_text("Please provide a valid channel ID")
+        except Exception as e:
+            await update.reply_text(f"Error while removing force subscription: {str(e)}")
+    else:
+        await update.reply_text(
+            "Please send in proper format `/rmfsub channel_id`"
+        )
+
+
+# Alternative version of rmfsub that removes all force subscription without specific channel ID
+@Client.on_message(filters.command(["rmfsub_all"]) & filters.user(ADMINS))
+async def remove_all_force_sub(bot, update):
+    try:
+        await set_force_sub(0)  # Disable force subscription
+        await set_channel_link(None)  # Remove the invite link
+        await update.reply_text("All Force Subscription channels have been removed")
+    except Exception as e:
+        await update.reply_text(f"Error while removing force subscription: {str(e)}")
 
 @Client.on_message(filters.command(["checklink"]) & filters.user(ADMINS))
 async def testlink(bot, update):
