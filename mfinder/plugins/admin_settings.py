@@ -210,16 +210,20 @@ async def force_sub(bot, update):
 
         if channel:
             try:
-                link = await bot.create_chat_invite_link(channel)
+                # Create request-to-join invite link
+                link = await bot.create_chat_invite_link(
+                    channel,
+                    creates_join_request=True  # This makes it a request-to-join link
+                )
                 await set_channel_link(link.invite_link)
             except Exception as e:
                 await update.reply_text(
-                    f" Error while creating channel invite link: {str(e)}"
+                    f"Error while creating channel invite link: {str(e)}"
                 )
                 return
 
             await set_force_sub(int(channel))
-            await update.reply_text(f"Force Subscription channel set to `{channel}`")
+            await update.reply_text(f"Force Subscription channel set to `{channel}` with request-to-join link")
         else:
             await set_channel_link(None)
             await update.reply_text("Force Subscription disabled")
