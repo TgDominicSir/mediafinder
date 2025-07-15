@@ -7,6 +7,7 @@ from mfinder.db.settings_sql import (
     set_custom_caption,
     set_force_sub,
     set_channel_link,
+    get_channel,
     get_link,
     set_username,
 )
