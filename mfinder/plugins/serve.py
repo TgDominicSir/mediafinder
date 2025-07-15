@@ -40,31 +40,8 @@ async def filter_(bot, message):
         await message.reply_text("You are banned. You can't use this bot.", quote=True)
         return
 
-    force_sub = await get_channel()
-    if force_sub:
-        try:
-            user = await bot.get_chat_member(int(force_sub), user_id)
-            if user.status == ChatMemberStatus.BANNED:
-                await message.reply_text("Sorry, you are Banned to use me.", quote=True)
-                return
-        except UserNotParticipant:
-            link = await get_link()
-            await message.reply_text(
-                text="**Please join my Update Channel to use this Bot!**",
-                reply_markup=InlineKeyboardMarkup(
-                    [[InlineKeyboardButton("🤖 Join Channel", url=link)]]
-                ),
-                parse_mode=ParseMode.MARKDOWN,
-                quote=True,
-            )
-            return
-        except Exception as e:
-            LOGGER.warning(e)
-            await message.reply_text(
-                text="Something went wrong, please contact my support group",
-                quote=True,
-            )
-            return
+    # REMOVED FORCE SUBSCRIBE CHECK FROM HERE
+    # Users can now search without joining the channel
 
     admin_settings = await get_admin_settings()
     if admin_settings:
@@ -224,6 +201,35 @@ async def get_result(search, page_no, user_id, username):
 @Client.on_callback_query(filters.regex(r"^file (.+)$"))
 async def get_files(bot, query):
     user_id = query.from_user.id
+    
+    # MOVED FORCE SUBSCRIBE CHECK HERE
+    force_sub = await get_channel()
+    if force_sub:
+        try:
+            user = await bot.get_chat_member(int(force_sub), user_id)
+            if user.status == ChatMemberStatus.BANNED:
+                await query.answer("Sorry, you are Banned to use me.", show_alert=True)
+                return
+        except UserNotParticipant:
+            link = await get_link()
+            await query.answer("Please join my Update Channel first!", show_alert=True)
+            await query.message.reply_text(
+                text="**Please join my Update Channel to download files!**",
+                reply_markup=InlineKeyboardMarkup(
+                    [
+                        [InlineKeyboardButton("🤖 Join Channel", url=link)],
+                        [InlineKeyboardButton("🔄 Try Again", callback_data=query.data)]
+                    ]
+                ),
+                parse_mode=ParseMode.MARKDOWN,
+                quote=True,
+            )
+            return
+        except Exception as e:
+            LOGGER.warning(e)
+            await query.answer("Something went wrong, please try again later.", show_alert=True)
+            return
+    
     if isinstance(query, CallbackQuery):
         file_id = query.data.split()[1]
         await query.answer("Sending file...", cache_time=60)
@@ -273,6 +279,28 @@ async def get_files(bot, query):
             await disc.delete()
             await msg.delete()
             await bot.send_message(user_id, "File has been deleted")
+
+
+# ADD A NEW CALLBACK HANDLER FOR CHECKING SUBSCRIPTION AFTER USER JOINS
+@Client.on_callback_query(filters.regex(r"^check_sub$"))
+async def check_subscription(bot, query):
+    user_id = query.from_user.id
+    
+    force_sub = await get_channel()
+    if force_sub:
+        try:
+            user = await bot.get_chat_member(int(force_sub), user_id)
+            if user.status == ChatMemberStatus.BANNED:
+                await query.answer("Sorry, you are Banned to use me.", show_alert=True)
+                return
+            # If user is subscribed, delete the subscription message
+            await query.message.delete()
+            await query.answer("✅ Subscription verified! You can now use the bot.", show_alert=True)
+        except UserNotParticipant:
+            await query.answer("❌ You haven't joined the channel yet. Please join first!", show_alert=True)
+        except Exception as e:
+            LOGGER.warning(e)
+            await query.answer("Something went wrong, please try again later.", show_alert=True)
 
 
 def get_size(size):
